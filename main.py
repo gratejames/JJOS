@@ -3,49 +3,34 @@ from m5ui import *
 import os
 import re
 
-
-
-keys = {
-	"K_X":		0x20,
-	"K_DOWN":	0x02,
-	"K_LEFT":	0x04,
-	"K_RIGHT":	0x08,
-	"K_UP":		0x01,
-	"K_O":		0x10,
-	"K_SELECT":	0x40,
-	"K_START":	0x80,
-}
-
-def getGameBoyPressed(key):
-	if key in keys:
-		return (i2c.readfrom(8, 1)[0] ^ 0xff) & key
-
 x = 1
 iconPos = []
 while x <= 3:
 	iconPos.append(((320/3)-13)*(x)-35)
 	x += 1
 
+del x
 
-currentDirDict = {}
-currentDirOptions = []
+___currentDirDict = {}
+___currentDirOptions = []
 
-placeInCDO = 0
+___placeInCDO = 0
 
-currentFolder = '/flash/Home'
+___currentFolder = '/flash/Home'
 
 def myExit():
 	print("Exiting...")
-	loadFolder(currentFolder)
+	loadFolder(___currentFolder)
 	buttonA.wasPressed(NavigateLeftInFolder)
 	buttonB.wasPressed(SelectInFolder)
 	buttonC.wasPressed(NavigateRightInFolder)
-	buttonLeft.wasPressed(NavigateLeftInFolder)
-	buttonSelect.wasPressed(SelectInFolder)
-	buttonRight.wasPressed(NavigateRightInFolder)
+	if FACESmode == "GAMEBOY":
+		buttonLeft.wasPressed(NavigateLeftInFolder)
+		buttonSelect.wasPressed(SelectInFolder)
+		buttonRight.wasPressed(NavigateRightInFolder)
 
 try:
-	os.mkdir(currentFolder)
+	os.mkdir(___currentFolder)
 except OSError:
 	pass
 
@@ -81,21 +66,21 @@ def loadPlaceInCDO(place, redraw=False):
 		lcd.setTextColor(color=lcd.BLACK, bcolor=lcd.WHITE)
 		lcd.rect(30, 30, 260, 150)
 		lcd.font(lcd.FONT_Default)
-		lcd.text(5, 5, currentFolder)
+		lcd.text(5, 5, ___currentFolder)
 	lcd.rect(48, 48, 120, 100, lcd.WHITE, lcd.WHITE)
 	lcd.font(lcd.FONT_DejaVu18)
 
-	nameOfFile = currentDirDict[currentDirOptions[place]]["Name"]
+	nameOfFile = ___currentDirDict[___currentDirOptions[place]]["Name"]
 	name1, name2, name3 = WrapLine(nameOfFile)
 	print("Current Option: " + nameOfFile)
 
-	lcd.image(175, 55, "/flash/res/" + currentDirDict[currentDirOptions[place]]["Icon"] + ".jpg")
+	lcd.image(175, 55, "/flash/res/" + ___currentDirDict[___currentDirOptions[place]]["Icon"] + ".jpg")
 
 	lcd.print(name1, 50, 50)
 	lcd.print(name2, 50, 80)
 	lcd.print(name3, 50, 110)
 
-	placeInCDO = place
+	___placeInCDO = place
 
 def loadFile(fileName):
 	dicty = {}
@@ -108,7 +93,7 @@ def loadFile(fileName):
 		dicty["Path"] = fileName
 	else:
 		dicty["Path"] = fileName
-		dicty["Name"] = fileName.replace(currentFolder, "")
+		dicty["Name"] = fileName.replace(___currentFolder, "")
 		dicty["Icon"] = "File"
 		dicty["Main"] = True
 	return dicty
@@ -120,43 +105,43 @@ def backPath(path):
 	return newPath
 
 def loadFolder(folderName):
-	global currentFolder, currentDirDict, currentDirOptions
-	currentDirDict = {}
-	currentDirOptions = []
-	currentDirDict = {}
+	global ___currentFolder, ___currentDirDict, ___currentDirOptions
+	___currentDirDict = {}
+	___currentDirOptions = []
+	___currentDirDict = {}
 	for i in os.listdir(folderName):
 		path = folderName + "/" + i
 		metadata = loadFile(path)
-		currentDirDict[i] = metadata
-		currentDirOptions.append(i)
+		___currentDirDict[i] = metadata
+		___currentDirOptions.append(i)
 
 	if folderName != "/flash/Home":
 		backDict = {
 			"Name": "../",
 			"Icon": "File",
 			"Main": True,
-			"Path": backPath(currentFolder),
+			"Path": backPath(___currentFolder),
 		}
-		currentDirDict["../"] = backDict
-		currentDirOptions.append("../")
+		___currentDirDict["../"] = backDict
+		___currentDirOptions.append("../")
 
-	currentDirOptions.sort()
+	___currentDirOptions.sort()
 
 	loadPlaceInCDO(0, True)
 	
 def NavigateLeftInFolder():
-	global placeInCDO, currentDirOptions
-	if placeInCDO <= 0:
-		placeInCDO = len(currentDirOptions)-1
+	global ___placeInCDO, ___currentDirOptions
+	if ___placeInCDO <= 0:
+		___placeInCDO = len(___currentDirOptions)-1
 	else:
-		placeInCDO += -1
-	loadPlaceInCDO(placeInCDO)
+		___placeInCDO += -1
+	loadPlaceInCDO(___placeInCDO)
 
 def SelectInFolder():
-	global currentFolder, currentDirDict, currentDirOptions
-	if currentDirDict[currentDirOptions[placeInCDO]]["Name"] == "/":
+	global ___currentFolder, ___currentDirDict, ___currentDirOptions
+	if ___currentDirDict[___currentDirOptions[___placeInCDO]]["Name"] == "/":
 		typeOfItem = "Current Working Directory"
-	elif not "." in currentDirOptions[placeInCDO] or currentDirOptions[placeInCDO] == "../":
+	elif not "." in ___currentDirOptions[___placeInCDO] or ___currentDirOptions[___placeInCDO] == "../":
 		typeOfItem = "Folder"
 	else:
 		typeOfItem = "File"
@@ -164,12 +149,12 @@ def SelectInFolder():
 
 	print()
 	print("===================CLICKED===================")
-	print("Name:   " + currentDirDict[currentDirOptions[placeInCDO]]["Name"])
-	print("Icon:   " + currentDirDict[currentDirOptions[placeInCDO]]["Icon"])
-	print("File:   " + currentDirOptions[placeInCDO])
-	print("Path:   " + currentDirDict[currentDirOptions[placeInCDO]]["Path"])
+	print("Name:   " + ___currentDirDict[___currentDirOptions[___placeInCDO]]["Name"])
+	print("Icon:   " + ___currentDirDict[___currentDirOptions[___placeInCDO]]["Icon"])
+	print("File:   " + ___currentDirOptions[___placeInCDO])
+	print("Path:   " + ___currentDirDict[___currentDirOptions[___placeInCDO]]["Path"])
 	print("Type:   " + typeOfItem)
-	print("In dir: " + str(currentDirOptions[placeInCDO] in os.listdir(currentFolder)))
+	print("In dir: " + str(___currentDirOptions[___placeInCDO] in os.listdir(___currentFolder)))
 	print("=============================================")
 	print()
 
@@ -178,15 +163,15 @@ def SelectInFolder():
 		print("Did CWD Stuff")
 	elif typeOfItem == "Folder":
 		print("Doing Folder Stuff")
-		print("Loading 2 Folder: " + currentDirDict[currentDirOptions[placeInCDO]]["Path"])
-		currentFolder = currentDirDict[currentDirOptions[placeInCDO]]["Path"]
-		print("Loading 1 Folder: " + currentFolder)
-		loadFolder(currentFolder)
+		print("Loading 2 Folder: " + ___currentDirDict[___currentDirOptions[___placeInCDO]]["Path"])
+		___currentFolder = ___currentDirDict[___currentDirOptions[___placeInCDO]]["Path"]
+		print("Loading 1 Folder: " + ___currentFolder)
+		loadFolder(___currentFolder)
 		print("Did Folder Stuff")
 	else:
 		print("Doing Program Stuff")
-		file = currentDirOptions[placeInCDO]
-		path = currentDirDict[currentDirOptions[placeInCDO]]["Path"]
+		file = ___currentDirOptions[___placeInCDO]
+		path = ___currentDirDict[___currentDirOptions[___placeInCDO]]["Path"]
 		modulePath = path.replace(".py", "")
 
 		print("Executing " + path)
@@ -210,12 +195,12 @@ def dotPath(path):
 	return newPath
 
 def NavigateRightInFolder():
-	global placeInCDO, currentDirOptions
-	if placeInCDO >= len(currentDirOptions)-1:
-		placeInCDO = 0
+	global ___placeInCDO, ___currentDirOptions
+	if ___placeInCDO >= len(___currentDirOptions)-1:
+		___placeInCDO = 0
 	else:
-		placeInCDO += 1
-	loadPlaceInCDO(placeInCDO)
+		___placeInCDO += 1
+	loadPlaceInCDO(___placeInCDO)
 
 def findAll(find, text):
 	li = []
@@ -230,7 +215,7 @@ def drawControlBar():
 	lcd.image(int(iconPos[2]), 210, "res/right.jpg")
 
 def main():
-	global currentFolder, currentDirDict, currentDirOptions
+	global ___currentFolder, ___currentDirDict, ___currentDirOptions
 	lcd.tft_writecmd(0x21)
 	lcd.clear(lcd.WHITE)
 	print("RUNNING MAIN v2.0")
@@ -240,13 +225,14 @@ def main():
 
 	lcd.setCursor(0, 0)
 
-	loadFolder(currentFolder)
+	loadFolder(___currentFolder)
 	buttonA.wasPressed(NavigateLeftInFolder)
 	buttonB.wasPressed(SelectInFolder)
 	buttonC.wasPressed(NavigateRightInFolder)
-	buttonLeft.wasPressed(NavigateLeftInFolder)
-	buttonSelect.wasPressed(SelectInFolder)
-	buttonRight.wasPressed(NavigateRightInFolder)
+	if FACESmode == "GAMEBOY":
+		buttonLeft.wasPressed(NavigateLeftInFolder)
+		buttonSelect.wasPressed(SelectInFolder)
+		buttonRight.wasPressed(NavigateRightInFolder)
 
 main()
 #Icons by https://icons8.com
